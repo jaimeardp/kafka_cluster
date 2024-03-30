@@ -1,0 +1,19 @@
+---
+# Recommended to use a specific Kafka version for stability
+kafka_version: "3.6.0" 
+scala_version: "2.12"
+
+#https://downloads.apache.org/kafka/kafka/3.5.2/kafka_2.12-3.5.2.tgz
+
+kafka_url: "https://downloads.apache.org/kafka/kafka/{{ kafka_version }}/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+
+# User and group settings
+kafka_user: "kafka"
+kafka_group: "kafka"
+
+# Multiple data directories are recommended
+kafka_data_dirs:
+  - "/var/lib/kafka/data1" 
+  - "/var/lib/kafka/data2" 
+
+# ... other variables as needed 

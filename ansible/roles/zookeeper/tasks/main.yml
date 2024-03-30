@@ -1,0 +1,86 @@
+
+- name: Install Java (Prerequisite)
+  dnf:
+    name: java-11-amazon-corretto-devel
+    state: present
+  become: yes
+
+- name: Download Zookeeper
+  ansible.builtin.get_url:
+    url: "{{ zookeeper_url }}"
+    dest: "/tmp/apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
+    timeout: 60
+
+- name: Create Installation Directory
+  ansible.builtin.file:
+    path: "{{ zookeeper_install_dir }}"
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Extract Zookeeper
+  ansible.builtin.unarchive:
+    src: "/tmp/apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
+    dest: "{{ zookeeper_install_dir }}"
+    remote_src: yes
+    creates: "{{ zookeeper_install_dir }}/apache-zookeeper-{{ zookeeper_version }}-bin"
+  become: yes
+
+- name: Create a symbolic link to the Zookeeper directory
+  ansible.builtin.file:
+    src: "{{ zookeeper_install_dir }}/apache-zookeeper-{{ zookeeper_version }}-bin"
+    dest: "{{ zookeeper_install_dir }}/current"
+    state: link
+  become: yes
+
+- name: Create Zookeeper data directory
+  ansible.builtin.file:
+    path: "{{ zookeeper_data_dir }}"
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Create myid file
+  ansible.builtin.lineinfile:
+    path: "{{ zookeeper_data_dir }}/myid"
+    line: "{{ zookeeper_id }}"
+    create: yes
+    state: present
+  become: yes
+
+- name: Ensure Zookeeper configuration directory exists
+  ansible.builtin.file:
+    path: "{{ zookeeper_conf_dir }}"
+    state: directory
+  become: yes
+
+- name: Ensure Zookeeper logs directory exists
+  ansible.builtin.file:
+    path: "{{ zookeeper_install_dir }}/current/logs"
+    state: directory
+  become: yes
+
+- name: Configure Zookeeper
+  ansible.builtin.template:
+    src: ./templates/zookeeper.properties.j2
+    dest: "{{ zookeeper_conf_dir }}/zoo.cfg"
+  notify: reload zookeeper
+  become: yes
+
+# - name: Check if Zookeeper is running
+#   shell: "ps aux | grep -v grep | grep zkServer.sh"
+#   register: zookeeper_status
+#   ignore_errors: true
+#   delegate_to: "{{ item }}"
+#   with_items: "{{ groups['zookeeper'] }}"
+#   become: yes
+
+- name: Stopping Zookeeper instances
+  shell: "{{ zookeeper_install_dir }}/current/bin/zkServer.sh stop"
+  #when: zookeeper_status['rc'] != 0  # Only start if not already running
+  become: yes
+
+- name: Start Zookeeper instances
+  shell: "{{ zookeeper_install_dir }}/current/bin/zkServer.sh start"
+  #when: zookeeper_status['rc'] != 0  # Only start if not already running
+  become: yes

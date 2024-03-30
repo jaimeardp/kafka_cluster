@@ -1,0 +1,12 @@
+
+# - name: reload kafka
+#   service:
+#     name: kafka
+#     state: restarted
+
+- name: reload kafka
+  block:
+    - name: Stop Kafka
+      ansible.builtin.shell: nohup /opt/kafka/bin/kafka-server-stop.sh
+    - name: Start Kafka
+      ansible.builtin.shell: nohup /opt/kafka/bin/kafka-server-start.sh
